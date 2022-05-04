@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package test;
+import "errors/errors.proto";
+
+option go_package = "./test;";
+
+enum ErrorReason {
+  // 设置缺省错误码
+  option (errors.default_code) = 500;
+
+  // 为某个枚举单独设置错误码
+  // 找不到用户
+  USER_NOT_FOUND = 0
+      [ (errors.code) = 404, (errors.pretty) = "user_not_found" ];
+  // 内容缺失
+  CONTENT_MISSING = 1 [ (errors.code) = 400 ];
+}
