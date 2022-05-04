@@ -15,7 +15,7 @@ import (
 //go:generate protoc -I ./errors --go_out=paths=source_relative:./errors errors.proto
 
 const (
-	errorsPackage = protogen.GoImportPath("github.com/alkaid/goerrors/errors")
+	errorsPackage = protogen.GoImportPath("github.com/alkaid/goerrors/apierrors")
 	fmtPackage    = protogen.GoImportPath("fmt")
 )
 
@@ -89,10 +89,13 @@ func genErrorsReason(gen *protogen.Plugin, file *protogen.File, g *protogen.Gene
 		}
 		upperCamelValue := strcase.ToCamel(strings.ToLower(desc))
 		comment = buildComment(upperCamelValue, comment)
-		prettyOpt := proto.GetExtension(v.Desc.Options(), errors.E_Pretty)
 		pretty := ""
-		if pp, ok := prettyOpt.(string); ok {
-			pretty = pp
+		if proto.HasExtension(v.Desc.Options(), errors.E_Pretty) {
+			pretty = proto.GetExtension(v.Desc.Options(), errors.E_Pretty).(string)
+		}
+		msg := string(enum.Desc.Name()) + "_" + string(v.Desc.Name()) + ".String()"
+		if proto.HasExtension(v.Desc.Options(), errors.E_Message) {
+			msg = "\"" + proto.GetExtension(v.Desc.Options(), errors.E_Message).(string) + "\""
 		}
 		err := &errorInfo{
 			Name:            string(enum.Desc.Name()),
@@ -104,6 +107,7 @@ func genErrorsReason(gen *protogen.Plugin, file *protogen.File, g *protogen.Gene
 			Comment:         comment,
 			HasComment:      len(comment) > 0,
 			Pretty:          pretty,
+			Msg:             msg,
 		}
 		ew.Errors = append(ew.Errors, err)
 	}

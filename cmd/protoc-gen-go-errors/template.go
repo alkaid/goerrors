@@ -7,18 +7,18 @@ import (
 
 var errorsTemplate = `
 {{ range .Errors }}
-var {{.LowerCamelValue}} *errors.RespError
+var {{.LowerCamelValue}} *apierrors.Error
 {{- end }}
 
 func init() {
 {{- range .Errors }}
-{{.LowerCamelValue}} = errors.New({{.HTTPCode}}, "{{.Key}}", "{{.Pretty}}", {{.Name}}_{{.Value}}.String())
-errors.Register({{.LowerCamelValue}})
+{{.LowerCamelValue}} = apierrors.New({{.HTTPCode}}, "{{.Key}}", "{{.Pretty}}", {{.Msg}})
+apierrors.Register({{.LowerCamelValue}})
 {{- end }}
 }
 
 {{ range .Errors }}
-{{if .HasComment}}{{.Comment}}{{end}}func {{.UpperCamelValue}}() errors.Error {
+{{if .HasComment}}{{.Comment}}{{end}}func {{.UpperCamelValue}}() *apierrors.Error {
 	 return {{.LowerCamelValue}}
 }
 {{ end }}
@@ -35,6 +35,7 @@ type errorInfo struct {
 	Comment         string
 	HasComment      bool
 	Pretty          string
+	Msg             string
 }
 
 type errorWrapper struct {

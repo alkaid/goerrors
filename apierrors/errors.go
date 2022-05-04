@@ -178,3 +178,17 @@ func FromError(err error) *Error {
 	}
 	return New(UnknownCode, UnknownReason, err.Error(), "")
 }
+
+func FromStatus(status IStatus) *Error {
+	metadata := make(map[string]string, len(status.GetMetadata()))
+	for k, v := range status.GetMetadata() {
+		metadata[k] = v
+	}
+	return &Error{Status: Status{
+		Code:     status.GetCode(),
+		Reason:   status.GetReason(),
+		Message:  status.GetMessage(),
+		Metadata: metadata,
+		Pretty:   status.GetPretty(),
+	}}
+}
