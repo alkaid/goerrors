@@ -14,6 +14,6 @@ enum ErrorReason {
   USER_NOT_FOUND = 0
       [ (errors.code) = 404, (errors.pretty) = "user_not_found" ];
   // 内容缺失
-  CONTENT_MISSING = 1
+  contentMissing = 1
       [ (errors.code) = 400, (errors.message) = "content is missing" ];
 }

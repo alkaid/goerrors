@@ -87,7 +87,7 @@ func genErrorsReason(gen *protogen.Plugin, file *protogen.File, g *protogen.Gene
 		if comment == "" {
 			comment = v.Comments.Trailing.String()
 		}
-		upperCamelValue := strcase.ToCamel(strings.ToLower(desc))
+		upperCamelValue := strcase.ToCamel(desc)
 		comment = buildComment(upperCamelValue, comment)
 		pretty := ""
 		if proto.HasExtension(v.Desc.Options(), errors.E_Pretty) {
@@ -101,8 +101,8 @@ func genErrorsReason(gen *protogen.Plugin, file *protogen.File, g *protogen.Gene
 			Name:            string(enum.Desc.Name()),
 			Value:           string(v.Desc.Name()),
 			HTTPCode:        enumCode,
-			UpperCamelValue: strcase.ToCamel(strings.ToLower(desc)),
-			LowerCamelValue: strcase.ToLowerCamel(strings.ToLower(desc)),
+			UpperCamelValue: upperCamelValue,
+			LowerCamelValue: strcase.ToLowerCamel(desc),
 			Key:             string(v.Desc.FullName()),
 			Comment:         comment,
 			HasComment:      len(comment) > 0,
