@@ -27,6 +27,15 @@ const (
 	SupportPackageIsVersion1 = true
 )
 
+type errKey string
+
+var errs = map[errKey]*Error{}
+
+// Register 注册错误信息
+func Register(e *Error) {
+	errs[errKey(e.Reason)] = e
+}
+
 // Error is a status error.
 type Error struct {
 	Status
@@ -62,6 +71,13 @@ func (e *Error) WithCause(cause error) *Error {
 func (e *Error) WithStack() *Error {
 	err := Clone(e)
 	err.Stack = pkgerrors.Callers()
+	return err
+}
+
+// WithMessage set message to current EgoError
+func (e *Error) WithMessage(msg string) *Error {
+	err := Clone(e)
+	err.Message = msg
 	return err
 }
 
@@ -170,8 +186,16 @@ func FromError(err error) *Error {
 		for _, detail := range gs.Details() {
 			switch d := detail.(type) {
 			case *errdetails.ErrorInfo:
-				ret.Reason = d.Reason
-				return ret.WithMetadata(d.Metadata)
+				e, ok := errs[errKey(d.Reason)]
+				if ok {
+					return e.WithMessage(gs.Message()).WithMetadata(d.Metadata)
+				}
+				return New(
+					status2.FromGRPCCode(gs.Code()),
+					d.Reason,
+					gs.Message(),
+					"",
+				).WithMetadata(d.Metadata)
 			}
 		}
 		return ret
