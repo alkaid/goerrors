@@ -10,10 +10,12 @@ import (
 
 var showVersion = flag.Bool("version", false, "print the version and exit")
 
+var version string
+
 func main() {
 	flag.Parse()
 	if *showVersion {
-		fmt.Printf("protoc-gen-go-errors %v\n", release)
+		fmt.Printf("Version: %s\n", version)
 		return
 	}
 	var flags flag.FlagSet

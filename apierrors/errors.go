@@ -74,10 +74,17 @@ func (e *Error) WithStack() *Error {
 	return err
 }
 
-// WithMessage set message to current EgoError
+// WithMessage set message to current Error
 func (e *Error) WithMessage(msg string) *Error {
 	err := Clone(e)
 	err.Message = msg
+	return err
+}
+
+// WithPretty set pretty to current Error
+func (e *Error) WithPretty(pretty string) *Error {
+	err := Clone(e)
+	err.Pretty = pretty
 	return err
 }
 
@@ -119,7 +126,7 @@ func (w *Error) Format(s fmt.State, verb rune) {
 }
 
 // New returns an error object for the code, message.
-func New(code int, reason, message string, pretty string) *Error {
+func New(code int, reason string, message string, pretty string) *Error {
 	return &Error{
 		Status: Status{
 			Code:    int32(code),
