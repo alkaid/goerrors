@@ -35,9 +35,11 @@ var (
 
 	// WithStack https://pkg.go.dev/github.com/pkg/errors#WithStack 的别名
 	WithStack = errors.WithStack
-
-	// NewWithStack https://pkg.go.dev/github.com/pkg/errors#New 的别名
-	//  实例化的同时会添加堆栈信息
-	//  若实例化时不添加堆栈请使用 New
-	NewWithStack = errors.New
 )
+
+// NewWithStack
+//  New and WithStack
+//  若实例化时不添加堆栈请使用 New
+func NewWithStack(message string) error {
+	return WithStack(New(message))
+}

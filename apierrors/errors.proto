@@ -11,10 +11,11 @@ extend google.protobuf.EnumValueOptions { int32 code = 1109; }
 extend google.protobuf.EnumValueOptions { string pretty = 1110; }
 extend google.protobuf.EnumValueOptions { string message = 1111; }
 
+// 服务状态
 message Status {
-  int32 code = 1;
-  string reason = 2;
-  string message = 3;
-  map<string, string> metadata = 4;
-  string pretty = 5;
+  int32 code = 1;     // 状态码,与http状态码保持一致
+  string reason = 2;  // 原因,客户端判断错误类型的依据
+  string message = 3; // 供开发阅读的错误消息
+  map<string, string> metadata = 4; // 扩展数据
+  string pretty = 5;                // 供用户阅读的错误信息
 };
