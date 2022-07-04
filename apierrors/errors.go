@@ -44,7 +44,7 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("error: code = %d reason = %s message = %s metadata = %v cause = %v", e.Code, e.Reason, e.Message, e.Metadata, e.cause)
+	return fmt.Sprintf("error: code=%d,reason=%s,message=%s,metadata=%v,cause=%v", e.Code, e.Reason, e.Message, e.Metadata, e.cause)
 }
 
 // Unwrap provides compatibility for Go 1.13 error chains.
@@ -114,7 +114,9 @@ func (w *Error) Format(s fmt.State, verb rune) {
 			} else {
 				fmt.Fprintf(s, "%+v", w.Cause())
 			}
-			w.Stack.Format(s, verb)
+			if w.Stack != nil {
+				w.Stack.Format(s, verb)
+			}
 			return
 		}
 		fallthrough
