@@ -1,0 +1,116 @@
+image: docker:stable
+
+services:
+  - docker:dind
+
+.go-cache:
+  variables:
+    GOPATH: $CI_PROJECT_DIR/.go
+  cache:
+    paths:
+      - .go/pkg/mod/
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  GOPROXY: "https://goproxy.io,direct"
+  GOPRIVATE: "git.mycompany.com,github.com/my/private"
+
+stages:
+  - linting
+#  - build
+#  - test
+#  - deploy
+
+.go-prepare:
+  before_script:
+    - echo "before_script GOPATH=$GOPATH"
+    - mkdir -p .go
+  #  - docker login -u${DOCKER_REGISTRY_USER} -p${DOCKER_REGISTRY_PASSWORD} ${DOCKER_REGISTRY_ADDRESS}
+
+yamllint:
+  stage: linting
+  image: registry.gitlab.com/pipeline-components/yamllint:latest
+  script:
+    - yamllint .
+  tags:
+    - local
+#jsonlint:
+#  stage: linting
+#  image: registry.gitlab.com/pipeline-components/jsonlint:latest
+#  script:
+#    - |
+#      find . -not -path './.git/*' -name '*.json' -type f -print0 |
+#      parallel --will-cite -k -0 -n1 jsonlint -q
+#  tags:
+#    - local
+
+
+#shellcheck:
+#  image:
+#    name: koalaman/shellcheck-alpine:latest
+#  stage: linting
+#  script:
+#    - shellcheck -s sh -S style $(ls *.sh | grep -v downstream)
+#  tags:
+#    - local
+
+commitlint:
+  stage: linting
+  image: alkaidgo/commitlint:node17.9.0-alpine3.15
+  script:
+    - npx commitlint --from ${CI_MERGE_REQUEST_DIFF_BASE_SHA} --to HEAD --verbose
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+  tags:
+    - local
+
+golint:
+#  image: registry.gitlab.com/gitlab-org/gitlab-build-images:golangci-lint-alpine
+  # 待官方Image更新并支持1.18后可更换回官方image
+  image: alkaidgo/golangci-lint-alpine:v1.46.2
+  stage: linting
+  extends:
+    - .go-cache
+    - .go-prepare
+  script:
+    # Use default .golangci.yml file from the image if one is not present in the project root.
+    - '[ -e .golangci.yml ] || cp /golangci/.golangci.yml .'
+    # Write the code coverage report to gl-code-quality-report.json
+    # and print linting issues to stdout in the format: path/to/file:line description
+    # remove `--issues-exit-code 0` or set to non-zero to fail the job if linting issues are detected
+    - golangci-lint run --issues-exit-code 1 --out-format code-climate | tee gl-code-quality-report.json | jq -r '.[] | "\(.location.path):\(.location.lines.begin) \(.description)"'
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    paths:
+      - gl-code-quality-report.json
+  tags:
+    - local
+
+#compile:
+#  stage: build
+#  extends: .go-cache
+#  script:
+#    - go mod download
+#    - go build -race -o $OUTPUT_NAME
+#  artifacts:
+#    paths:
+#      - $OUTPUT_NAME
+
+#BuildImages:
+#  stage: build
+#  script:
+#    - docker build -t registry.cn-beijing.aliyuncs.com/devopsman/marionxue-ops:${CI_PROJECT_NAME} .
+#    - docker push registry.cn-beijing.aliyuncs.com/devopsman/marionxue-ops:${CI_PROJECT_NAME}
+#  only:
+#    - master
+#
+#TestImage:
+#  stage: test
+#  script:
+#    - mkdir -pv /logs/${CI_PROJECT_NAME}
+#    - if [ $(docker ps -qa --filter name=${CI_PROJECT_NAME}) ];then docker rm -f ${CI_PROJECT_NAME};fi
+#    - docker run -d --restart=always --name ${CI_PROJECT_NAME} -v /logs/nodedemo:/logs/${CI_PROJECT_NAME} -e NODE_ENV=production --net=host registry.cn-beijing.aliyuncs.com/devopsman/marionxue-ops:${CI_PROJECT_NAME}
+#    - sleep 5
+#    - docker ps -as
+#    - docker ps -a

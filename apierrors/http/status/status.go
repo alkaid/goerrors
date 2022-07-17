@@ -60,7 +60,9 @@ func (c statusConverter) ToGRPCCode(code int) codes.Code {
 }
 
 // FromGRPCCode converts a gRPC error code into the corresponding HTTP response status.
-// See: https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
+//  See: https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
+//
+// nolint:gocyclo // 必要的
 func (c statusConverter) FromGRPCCode(code codes.Code) int {
 	switch code {
 	case codes.OK:

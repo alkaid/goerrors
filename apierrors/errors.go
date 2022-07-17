@@ -112,7 +112,14 @@ func (w *Error) Format(s fmt.State, verb rune) {
 			if w.cause == nil {
 				fmt.Fprintf(s, "%+v", w.Error())
 			} else {
-				fmt.Fprintf(s, "%+v", w.Cause())
+				f, ok := w.cause.(interface {
+					Format(s fmt.State, verb rune)
+				})
+				if ok {
+					f.Format(s, verb)
+				} else {
+					fmt.Fprintf(s, "%+v", w.Cause())
+				}
 			}
 			if w.Stack != nil {
 				w.Stack.Format(s, verb)
@@ -121,7 +128,7 @@ func (w *Error) Format(s fmt.State, verb rune) {
 		}
 		fallthrough
 	case 's':
-		io.WriteString(s, w.Error())
+		_, _ = io.WriteString(s, w.Error())
 	case 'q':
 		fmt.Fprintf(s, "%q", w.Error())
 	}
@@ -204,12 +211,14 @@ func FromError(err error) *Error {
 					d.Reason,
 					gs.Message(),
 					"",
-				).WithMetadata(d.Metadata)
+				).WithMetadata(d.Metadata).WithCause(err)
+			default:
+				// do nothing
 			}
 		}
 		return ret
 	}
-	return New(UnknownCode, UnknownReason, err.Error(), "")
+	return New(UnknownCode, UnknownReason, err.Error(), "").WithCause(err)
 }
 
 func FromStatus(status IStatus) *Error {

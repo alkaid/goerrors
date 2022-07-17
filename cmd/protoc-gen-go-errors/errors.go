@@ -16,7 +16,6 @@ import (
 
 const (
 	errorsPackage = protogen.GoImportPath("github.com/alkaid/goerrors/apierrors")
-	fmtPackage    = protogen.GoImportPath("fmt")
 )
 
 // generateFile generates a _errors.pb.go file containing kratos errors definitions.
@@ -30,7 +29,7 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) *protogen.Generated
 	g.P()
 	g.P("package ", file.GoPackageName)
 	g.P()
-	// g.QualifiedGoIdent(fmtPackage.Ident(""))
+	// it may need g.QualifiedGoIdent(fmtPackage.Ident(""))
 	generateFileContent(gen, file, g)
 	return g
 }
