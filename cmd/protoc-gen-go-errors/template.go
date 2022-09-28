@@ -12,7 +12,7 @@ var {{.LowerCamelValue}} *apierrors.Error
 
 func init() {
 {{- range .Errors }}
-{{.LowerCamelValue}} = apierrors.New({{.HTTPCode}}, "{{.Key}}", "{{.Pretty}}", {{.Msg}})
+{{.LowerCamelValue}} = apierrors.New({{.HTTPCode}}, "{{.Key}}", {{.Msg}}, "{{.Pretty}}")
 apierrors.Register({{.LowerCamelValue}})
 {{- end }}
 }
