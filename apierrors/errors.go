@@ -81,6 +81,20 @@ func (e *Error) WithMessage(msg string) *Error {
 	return err
 }
 
+// WithAppend 在原本消息后添加 fmt.Sprintf
+func (e *Error) WithAppend(format string, a ...any) *Error {
+	err := Clone(e)
+	err.Message = fmt.Sprintf(err.Message+". "+format, a...)
+	return err
+}
+
+// WithTail 在原本消息前添加 fmt.Sprintf
+func (e *Error) WithTail(format string, a ...any) *Error {
+	err := Clone(e)
+	err.Message = fmt.Sprintf(format+". err="+e.Message, a...)
+	return err
+}
+
 // WithPretty set pretty to current Error
 func (e *Error) WithPretty(pretty string) *Error {
 	err := Clone(e)
