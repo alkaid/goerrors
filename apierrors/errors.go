@@ -7,7 +7,7 @@ import (
 
 	status2 "github.com/alkaid/goerrors/apierrors/http/status"
 
-	pkgerrors "github.com/alkaid/goerrors/internal/errors"
+	pkgerrors "github.com/alkaid/goerrors/errors"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/status"
 )
@@ -40,11 +40,16 @@ func Register(e *Error) {
 type Error struct {
 	Status
 	cause error
-	*pkgerrors.Stack
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("error: code=%d,reason=%s,message=%s,metadata=%v,cause=%v", e.Code, e.Reason, e.Message, e.Metadata, e.cause)
+	if e.cause != nil {
+		return e.fmtError() + e.cause.Error()
+	}
+	return e.fmtError()
+}
+func (e *Error) fmtError() string {
+	return fmt.Sprintf("error: code=%d,reason=%s,message=%s,metadata=%v,cause:", e.Code, e.Reason, e.Message, e.Metadata)
 }
 
 // Unwrap provides compatibility for Go 1.13 error chains.
@@ -60,18 +65,19 @@ func (e *Error) Is(err error) bool {
 }
 
 // WithCause with the underlying cause of the error.
+//
+//	若cause是包装过stack的打印时会打印cause的堆栈
 func (e *Error) WithCause(cause error) *Error {
 	err := Clone(e)
 	err.cause = cause
-	err.Stack = pkgerrors.Callers()
 	return err
 }
 
 // WithStack with the stub empty error for stack
-func (e *Error) WithStack() *Error {
-	err := Clone(e)
-	err.Stack = pkgerrors.Callers()
-	return err
+//
+//	注意 FromError 会自动调用 WithCause,若已经 WithCause 且 cause 已经包装过stack的请勿重复调用 WithStack
+func (e *Error) WithStack() error {
+	return pkgerrors.WithStack(e)
 }
 
 // WithMessage set message to current Error
@@ -123,28 +129,13 @@ func (w *Error) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if s.Flag('+') {
-			if w.cause == nil {
-				fmt.Fprintf(s, "%+v", w.Error())
-			} else {
-				f, ok := w.cause.(interface {
-					Format(s fmt.State, verb rune)
-				})
-				if ok {
-					f.Format(s, verb)
-				} else {
-					fmt.Fprintf(s, "%+v", w.Cause())
-				}
-			}
-			if w.Stack != nil {
-				w.Stack.Format(s, verb)
-			}
+			io.WriteString(s, w.fmtError())
+			fmt.Fprintf(s, "%+v\n", w.Cause())
 			return
 		}
 		fallthrough
-	case 's':
-		_, _ = io.WriteString(s, w.Error())
-	case 'q':
-		fmt.Fprintf(s, "%q", w.Error())
+	case 's', 'q':
+		io.WriteString(s, w.Error())
 	}
 }
 
@@ -232,7 +223,7 @@ func FromError(err error) *Error {
 		}
 		return ret
 	}
-	return New(UnknownCode, UnknownReason, err.Error(), "").WithCause(err)
+	return New(UnknownCode, UnknownReason, "", "").WithCause(err)
 }
 
 func FromStatus(status IStatus) *Error {

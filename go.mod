@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/iancoleman/strcase v0.2.0
+	github.com/pkg/errors v0.9.1
 	google.golang.org/genproto v0.0.0-20220503193339-ba3ae3f07e29
 	google.golang.org/grpc v1.46.0
 	google.golang.org/protobuf v1.28.0

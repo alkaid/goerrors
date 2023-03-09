@@ -1,11 +1,12 @@
 // Package errors
-//  "github.com/pkg/errors" wrapper
+//
+//	"github.com/pkg/errors" wrapper
 package errors
 
 import (
 	stderrors "errors"
 
-	"github.com/alkaid/goerrors/internal/errors"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -35,11 +36,10 @@ var (
 
 	// WithStack https://pkg.go.dev/github.com/pkg/errors#WithStack 的别名
 	WithStack = errors.WithStack
-)
 
-// NewWithStack
-//  New and WithStack
-//  若实例化时不添加堆栈请使用 New
-func NewWithStack(message string) error {
-	return WithStack(New(message))
-}
+	// NewWithStack
+	//
+	//	New and WithStack
+	//	若实例化时不添加堆栈请使用 New
+	NewWithStack = errors.New
+)
