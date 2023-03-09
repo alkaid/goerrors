@@ -66,7 +66,7 @@ func (e *Error) Is(err error) bool {
 
 // WithCause with the underlying cause of the error.
 //
-//	若cause是包装过stack的打印时会打印cause的堆栈
+//	若cause是包装过stack的会保留stack,打印时会打印cause的堆栈
 func (e *Error) WithCause(cause error) *Error {
 	err := Clone(e)
 	err.cause = cause
@@ -81,6 +81,8 @@ func (e *Error) WithStack() error {
 }
 
 // WithMessage set message to current Error
+//
+//	注意不会添加stack
 func (e *Error) WithMessage(msg string) *Error {
 	err := Clone(e)
 	err.Message = msg
@@ -88,6 +90,8 @@ func (e *Error) WithMessage(msg string) *Error {
 }
 
 // WithAppend 在原本消息后添加 fmt.Sprintf
+//
+//	注意不会添加stack
 func (e *Error) WithAppend(format string, a ...any) *Error {
 	err := Clone(e)
 	err.Message = fmt.Sprintf(err.Message+". "+format, a...)
@@ -95,6 +99,8 @@ func (e *Error) WithAppend(format string, a ...any) *Error {
 }
 
 // WithTail 在原本消息前添加 fmt.Sprintf
+//
+//	注意不会添加stack
 func (e *Error) WithTail(format string, a ...any) *Error {
 	err := Clone(e)
 	err.Message = fmt.Sprintf(format+". err="+e.Message, a...)
@@ -102,6 +108,8 @@ func (e *Error) WithTail(format string, a ...any) *Error {
 }
 
 // WithPretty set pretty to current Error
+//
+//	注意不会添加stack
 func (e *Error) WithPretty(pretty string) *Error {
 	err := Clone(e)
 	err.Pretty = pretty
@@ -109,6 +117,8 @@ func (e *Error) WithPretty(pretty string) *Error {
 }
 
 // WithMetadata with an MD formed by the mapping of key, value.
+//
+//	注意不会添加stack
 func (e *Error) WithMetadata(md map[string]string) *Error {
 	err := Clone(e)
 	err.Metadata = md
@@ -140,6 +150,8 @@ func (w *Error) Format(s fmt.State, verb rune) {
 }
 
 // New returns an error object for the code, message.
+//
+//	不带 stack
 func New(code int, reason string, message string, pretty string) *Error {
 	return &Error{
 		Status: Status{
@@ -189,6 +201,8 @@ func Clone(err *Error) *Error {
 
 // FromError try to convert an error to *Error.
 // It supports wrapped errors.
+//
+//	若原 error 带stack,则会保留stack
 func FromError(err error) *Error {
 	if err == nil {
 		return nil
@@ -226,7 +240,30 @@ func FromError(err error) *Error {
 	return New(UnknownCode, UnknownReason, "", "").WithCause(err)
 }
 
-func FromStatus(status IStatus) *Error {
+// FromStatus 将 IStatus 转为 Error 并 Error.WithStack
+//
+//	@param status
+//	@return error
+func FromStatus(status IStatus) error {
+	metadata := make(map[string]string, len(status.GetMetadata()))
+	for k, v := range status.GetMetadata() {
+		metadata[k] = v
+	}
+	e := &Error{Status: Status{
+		Code:     status.GetCode(),
+		Reason:   status.GetReason(),
+		Message:  status.GetMessage(),
+		Metadata: metadata,
+		Pretty:   status.GetPretty(),
+	}}
+	return e.WithStack()
+}
+
+// FromStatusWithoutStack 将 IStatus 转为 Error, 不带 stack
+//
+//	@param status
+//	@return *Error
+func FromStatusWithoutStack(status IStatus) *Error {
 	metadata := make(map[string]string, len(status.GetMetadata()))
 	for k, v := range status.GetMetadata() {
 		metadata[k] = v
