@@ -49,7 +49,7 @@ func (e *Error) Error() string {
 	return e.fmtError()
 }
 func (e *Error) fmtError() string {
-	return fmt.Sprintf("error: code=%d,reason=%s,message=%s,metadata=%v,cause:", e.Code, e.Reason, e.Message, e.Metadata)
+	return fmt.Sprintf("code=%d,reason=%s,message=%s,metadata=%v,cause:%s", e.Code, e.Reason, e.Message, e.Metadata, e.cause.Error())
 }
 
 // Unwrap provides compatibility for Go 1.13 error chains.
@@ -202,7 +202,8 @@ func Clone(err *Error) *Error {
 // FromError try to convert an error to *Error.
 // It supports wrapped errors.
 //
-//	若原 error 带stack,则会保留stack
+//	1.若原 error 带stack,则会保留stack
+//	2.若原 error 是 Wrap 过的 Error,则可能丢失 stack
 func FromError(err error) *Error {
 	if err == nil {
 		return nil
@@ -237,7 +238,7 @@ func FromError(err error) *Error {
 		}
 		return ret
 	}
-	return New(UnknownCode, UnknownReason, "", "").WithCause(err)
+	return New(UnknownCode, UnknownReason, err.Error(), "").WithCause(err)
 }
 
 // FromStatus 将 IStatus 转为 Error 并 Error.WithStack
