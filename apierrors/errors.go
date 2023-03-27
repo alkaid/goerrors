@@ -44,12 +44,12 @@ type Error struct {
 
 func (e *Error) Error() string {
 	if e.cause != nil {
-		return e.fmtError() + e.cause.Error()
+		return e.fmtError() + "cause:" + e.cause.Error()
 	}
 	return e.fmtError()
 }
 func (e *Error) fmtError() string {
-	return fmt.Sprintf("code=%d,reason=%s,message=%s,metadata=%v,cause:%s", e.Code, e.Reason, e.Message, e.Metadata, e.cause.Error())
+	return fmt.Sprintf("code=%d,reason=%s,message=%s,metadata=%v", e.Code, e.Reason, e.Message, e.Metadata)
 }
 
 // Unwrap provides compatibility for Go 1.13 error chains.
