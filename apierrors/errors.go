@@ -121,7 +121,9 @@ func (e *Error) WithPretty(pretty string) *Error {
 //	注意不会添加stack
 func (e *Error) WithMetadata(md map[string]string) *Error {
 	err := Clone(e)
-	err.Metadata = md
+	for k, v := range md {
+		err.Metadata[k] = v
+	}
 	return err
 }
 
